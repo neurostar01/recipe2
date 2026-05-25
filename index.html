@@ -351,12 +351,6 @@ input, textarea { user-select: text; -webkit-user-select: text; }
   </div>
 </div>
 
-<!-- 설치 안내 배너 -->
-<div class="install-banner" id="installBanner">
-  <div class="msg" id="installMsg">홈 화면에 추가하면 앱처럼 쓸 수 있어요</div>
-  <button class="close-btn" id="installClose">×</button>
-</div>
-
 <!-- 메뉴 모달 -->
 <div class="modal-bg" id="menuModal">
   <div class="modal">
@@ -907,31 +901,6 @@ document.getElementById('aboutCloseBtn').addEventListener('click', () => {
   document.getElementById('aboutModal').classList.remove('show');
 });
 
-// ============ 설치 안내 배너 ============
-function maybeShowInstallBanner() {
-  const dismissed = localStorage.getItem(BANNER_DISMISSED_KEY);
-  if (dismissed) return;
-  // 이미 standalone(홈 화면 추가됨)이면 표시 안 함
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone === true;
-  if (isStandalone) return;
-  // 데이터가 어느 정도 쌓였을 때만 안내 (최초 사용 직후 방해 안 함)
-  if (recipes.length < 2) return;
-
-  const ua = navigator.userAgent.toLowerCase();
-  const isIOS = /iphone|ipad|ipod/.test(ua);
-  if (isIOS) {
-    document.getElementById('installMsg').innerHTML = '공유 → "홈 화면에 추가"로 앱처럼 쓰세요';
-  }
-  setTimeout(() => {
-    document.getElementById('installBanner').classList.add('show');
-  }, 1500);
-}
-document.getElementById('installClose').addEventListener('click', () => {
-  localStorage.setItem(BANNER_DISMISSED_KEY, '1');
-  document.getElementById('installBanner').classList.remove('show');
-});
-
 // ============ 모달 외부 탭 → 닫기 ============
 document.querySelectorAll('.modal-bg').forEach(bg => {
   bg.addEventListener('click', (e) => {
@@ -966,7 +935,6 @@ function getSamples() {
     try { saveRecipes(); } catch(e) {}
   }
   render();
-  maybeShowInstallBanner();
 })();
 </script>
 </body>
