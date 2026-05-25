@@ -90,34 +90,69 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 /* 카드 그리드 */
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px 20px; }
 .card {
-  background: var(--paper); border-radius: 14px; padding: 18px 12px;
-  text-align: center; cursor: pointer; border: 1px solid var(--line);
+  background: var(--paper); border-radius: 14px;
+  cursor: pointer; border: 1px solid var(--line);
   box-shadow: 2px 3px 0 rgba(42, 37, 32, 0.08);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   position: relative; aspect-ratio: 1;
-  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  overflow: hidden;
 }
 .card:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(42, 37, 32, 0.08); }
-.card .emoji { font-size: 56px; margin-bottom: 6px; line-height: 1; }
+
+/* 사진이 있는 카드: 사진 + 하단 오버레이 */
+.card .cover {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.card .cover-fallback {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--paper);
+  font-size: 70px;
+  line-height: 1;
+}
+.card .overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 22px 12px 12px;
+  background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.4) 60%, transparent 100%);
+  color: #fff;
+  text-align: center;
+}
+.card.no-photo .overlay {
+  background: linear-gradient(to top, rgba(42,37,32,0.05) 0%, transparent 100%);
+  color: var(--ink);
+}
 .card .name {
   font-family: 'Gowun Batang', serif; font-size: 14px; font-weight: 700;
-  line-height: 1.3; max-width: 100%;
+  line-height: 1.3;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
+.card.no-photo .name { text-shadow: none; }
 .card .desc {
-  font-size: 11px; color: var(--ink-soft); margin-top: 2px;
-  max-width: 100%;
+  font-size: 11px; margin-top: 2px;
+  opacity: 0.85;
   display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
   overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
+.card.no-photo .desc { color: var(--ink-soft); text-shadow: none; }
 .card .delete {
-  position: absolute; top: 4px; right: 4px; background: var(--accent);
-  color: white; border: none; width: 26px; height: 26px; border-radius: 50%;
+  position: absolute; top: 6px; right: 6px; background: var(--accent);
+  color: white; border: none; width: 28px; height: 28px; border-radius: 50%;
   font-size: 16px; cursor: pointer; line-height: 1;
   display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 2;
 }
-.add-card { background: transparent; border: 2px dashed var(--line); box-shadow: none; color: var(--ink-soft); }
+.add-card {
+  background: transparent; border: 2px dashed var(--line); box-shadow: none;
+  color: var(--ink-soft);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
 .add-card:active { border-color: var(--accent); color: var(--accent); }
 .add-card .plus { font-size: 36px; font-weight: 300; line-height: 1; }
 .add-card .add-label { font-size: 12px; margin-top: 4px; }
@@ -212,8 +247,14 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .edit-btn { color: var(--accent); font-weight: 700; }
 .detail-content { padding: 18px 20px; max-width: 520px; margin: 0 auto; }
 .detail-hero { text-align: center; padding: 16px 0 24px; border-bottom: 1px dashed var(--line); margin-bottom: 22px; }
+.detail-hero .hero-photo {
+  width: 180px; height: 180px; border-radius: 16px;
+  object-fit: cover; display: block; margin: 0 auto;
+  border: 1px solid var(--line);
+  box-shadow: 0 4px 12px rgba(42,37,32,0.12);
+}
 .detail-hero .emoji { font-size: 100px; line-height: 1; }
-.detail-hero h1 { font-family: 'Gowun Batang', serif; font-size: 26px; margin-top: 10px; line-height: 1.3; }
+.detail-hero h1 { font-family: 'Gowun Batang', serif; font-size: 26px; margin-top: 14px; line-height: 1.3; }
 .detail-hero .desc { font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
 .section { margin-bottom: 28px; }
 .section-title {
@@ -256,12 +297,32 @@ input, textarea { user-select: text; -webkit-user-select: text; }
   color: var(--ink-soft); font-size: 13px;
 }
 .thumb-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.thumb-preview .thumb { position: relative; width: 64px; height: 64px; }
-.thumb-preview img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
+.thumb-preview .thumb {
+  position: relative; width: 72px; height: 72px;
+  border-radius: 10px; overflow: hidden;
+  border: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+.thumb-preview .thumb.is-cover { border-color: var(--accent); }
+.thumb-preview img {
+  width: 100%; height: 100%; object-fit: cover; cursor: pointer; display: block;
+}
 .thumb-preview .rm {
-  position: absolute; top: -6px; right: -6px; background: var(--accent);
+  position: absolute; top: 2px; right: 2px; background: var(--accent);
   color: white; border: none; width: 22px; height: 22px;
   border-radius: 50%; font-size: 13px; cursor: pointer; line-height: 1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.thumb-preview .cover-badge {
+  position: absolute; bottom: 2px; left: 2px;
+  background: var(--accent); color: white;
+  font-size: 9px; padding: 2px 5px; border-radius: 4px;
+  font-weight: 700; letter-spacing: 0.05em;
+  pointer-events: none;
+}
+.cover-hint {
+  font-size: 11px; color: var(--ink-soft);
+  margin-top: 6px; line-height: 1.5;
 }
 
 .link-input-row { display: flex; gap: 6px; margin-bottom: 6px; }
@@ -401,10 +462,6 @@ input, textarea { user-select: text; -webkit-user-select: text; }
   <div class="modal">
     <h2 id="modalTitle">새 레시피</h2>
     <div class="field">
-      <label>음식 아이콘</label>
-      <div class="emoji-picker" id="emojiPicker"></div>
-    </div>
-    <div class="field">
       <label>음식 이름</label>
       <input type="text" id="foodName" placeholder="예: 김치찌개" autocomplete="off">
     </div>
@@ -413,20 +470,33 @@ input, textarea { user-select: text; -webkit-user-select: text; }
       <input type="text" id="foodDesc" placeholder="예: 엄마가 알려준 비법" autocomplete="off">
     </div>
     <div class="field">
+      <label>📷 사진</label>
+      <div style="display: flex; gap: 8px;">
+        <label class="upload-area" style="flex:1;">
+          🖼️ 갤러리에서
+          <input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
+        </label>
+        <label class="upload-area" style="flex:1;">
+          📸 카메라로 촬영
+          <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none;">
+        </label>
+      </div>
+      <div class="thumb-preview" id="photoPreview"></div>
+      <div class="cover-hint" id="coverHint" style="display:none;">
+        ⭐ 사진을 탭하면 대표 사진으로 지정돼요 (카드 표지)
+      </div>
+    </div>
+    <div class="field" id="emojiField">
+      <label>음식 아이콘 (사진 없을 때 표시용)</label>
+      <div class="emoji-picker" id="emojiPicker"></div>
+    </div>
+    <div class="field">
       <label>재료 (한 줄에 하나씩)</label>
       <textarea id="foodIngredients" placeholder="김치 200g&#10;돼지고기 150g&#10;두부 반 모"></textarea>
     </div>
     <div class="field">
       <label>요리 순서 (한 줄에 하나씩)</label>
       <textarea id="foodSteps" placeholder="냄비에 기름을 두르고 돼지고기를 볶는다&#10;김치를 넣고 같이 볶는다"></textarea>
-    </div>
-    <div class="field">
-      <label>📷 사진</label>
-      <label class="upload-area">
-        탭하여 이미지 선택 (여러 장 가능)
-        <input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
-      </label>
-      <div class="thumb-preview" id="photoPreview"></div>
     </div>
     <div class="field">
       <label>🔗 참고 링크</label>
@@ -469,6 +539,7 @@ const BANNER_DISMISSED_KEY = 'install_banner_dismissed';
 let recipes = [];
 let editingId = null;
 let tempPhotos = [];
+let tempCoverIdx = 0; // 표지로 쓸 사진 인덱스
 let tempLinks = [];
 let selectedEmoji = '🍚';
 let searchQuery = '';
@@ -519,12 +590,17 @@ function render() {
 
   filtered.forEach(r => {
     const card = document.createElement('div');
-    card.className = 'card';
+    const coverPhoto = r.coverPhoto || (r.photos && r.photos[0]) || null;
+    card.className = coverPhoto ? 'card' : 'card no-photo';
     card.innerHTML = `
       <button class="delete" data-id="${r.id}">×</button>
-      <div class="emoji">${r.emoji}</div>
-      <div class="name">${escapeHtml(r.name)}</div>
-      ${r.desc ? `<div class="desc">${escapeHtml(r.desc)}</div>` : ''}
+      ${coverPhoto
+        ? `<img class="cover" src="${coverPhoto}" alt="">`
+        : `<div class="cover-fallback">${r.emoji || '🍚'}</div>`}
+      <div class="overlay">
+        <div class="name">${escapeHtml(r.name)}</div>
+        ${r.desc ? `<div class="desc">${escapeHtml(r.desc)}</div>` : ''}
+      </div>
     `;
     card.addEventListener('click', (e) => {
       if (e.target.classList.contains('delete')) {
@@ -582,11 +658,12 @@ function renderEmojiPicker() {
 function openEditModal(id) {
   editingId = id;
   tempPhotos = [];
+  tempCoverIdx = 0;
   tempLinks = [];
 
   if (id) {
     const r = recipes.find(x => x.id === id);
-    selectedEmoji = r.emoji;
+    selectedEmoji = r.emoji || '🍚';
     document.getElementById('modalTitle').textContent = '레시피 편집';
     document.getElementById('foodName').value = r.name;
     document.getElementById('foodDesc').value = r.desc || '';
@@ -594,6 +671,11 @@ function openEditModal(id) {
     document.getElementById('foodSteps').value = (r.steps || []).join('\n');
     tempPhotos = [...(r.photos || [])];
     tempLinks = [...(r.links || [])];
+    // 기존 표지 사진이 어느 인덱스에 있는지 찾기
+    if (r.coverPhoto) {
+      const idx = tempPhotos.indexOf(r.coverPhoto);
+      tempCoverIdx = idx >= 0 ? idx : 0;
+    }
   } else {
     selectedEmoji = '🍚';
     document.getElementById('modalTitle').textContent = '새 레시피';
@@ -615,17 +697,35 @@ function closeEditModal() {
 
 function renderPhotoPreview() {
   const cont = document.getElementById('photoPreview');
+  const hint = document.getElementById('coverHint');
   cont.innerHTML = '';
+  // 표지 인덱스 범위 보정
+  if (tempCoverIdx >= tempPhotos.length) tempCoverIdx = 0;
   tempPhotos.forEach((p, i) => {
     const div = document.createElement('div');
-    div.className = 'thumb';
-    div.innerHTML = `<img src="${p}"><button class="rm" type="button">×</button>`;
-    div.querySelector('.rm').addEventListener('click', () => {
+    div.className = 'thumb' + (i === tempCoverIdx ? ' is-cover' : '');
+    div.innerHTML = `
+      <img src="${p}" alt="">
+      ${i === tempCoverIdx ? '<div class="cover-badge">표지</div>' : ''}
+      <button class="rm" type="button" aria-label="삭제">×</button>
+    `;
+    // 사진 탭 → 표지로 지정
+    div.querySelector('img').addEventListener('click', () => {
+      tempCoverIdx = i;
+      renderPhotoPreview();
+    });
+    // × 버튼 → 삭제
+    div.querySelector('.rm').addEventListener('click', (e) => {
+      e.stopPropagation();
       tempPhotos.splice(i, 1);
+      // 삭제 후 표지 인덱스 조정
+      if (i < tempCoverIdx) tempCoverIdx--;
+      else if (i === tempCoverIdx) tempCoverIdx = 0;
       renderPhotoPreview();
     });
     cont.appendChild(div);
   });
+  hint.style.display = tempPhotos.length > 1 ? 'block' : 'none';
 }
 
 function renderLinkPreview() {
@@ -644,9 +744,8 @@ function renderLinkPreview() {
 }
 
 // 사진 업로드 (압축)
-document.getElementById('photoInput').addEventListener('change', (e) => {
-  const files = Array.from(e.target.files);
-  files.forEach(file => {
+function handlePhotoFiles(files) {
+  Array.from(files).forEach(file => {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const img = new Image();
@@ -665,6 +764,13 @@ document.getElementById('photoInput').addEventListener('change', (e) => {
     };
     reader.readAsDataURL(file);
   });
+}
+document.getElementById('photoInput').addEventListener('change', (e) => {
+  handlePhotoFiles(e.target.files);
+  e.target.value = '';
+});
+document.getElementById('cameraInput').addEventListener('change', (e) => {
+  handlePhotoFiles(e.target.files);
   e.target.value = '';
 });
 
@@ -698,6 +804,7 @@ document.getElementById('saveBtn').addEventListener('click', () => {
     ingredients: document.getElementById('foodIngredients').value.split('\n').map(s => s.trim()).filter(Boolean),
     steps: document.getElementById('foodSteps').value.split('\n').map(s => s.trim()).filter(Boolean),
     photos: tempPhotos,
+    coverPhoto: tempPhotos[tempCoverIdx] || null,
     links: tempLinks,
     createdAt: editingId ? (recipes.find(r => r.id === editingId)?.createdAt || now) : now,
     updatedAt: now
@@ -732,10 +839,13 @@ function showDetail(id) {
   const r = recipes.find(x => x.id === id);
   if (!r) return;
 
+  const heroImg = r.coverPhoto || (r.photos && r.photos[0]) || null;
   const content = document.getElementById('detailContent');
   content.innerHTML = `
     <div class="detail-hero">
-      <div class="emoji">${r.emoji}</div>
+      ${heroImg
+        ? `<img class="hero-photo" src="${heroImg}" alt="">`
+        : `<div class="emoji">${r.emoji || '🍚'}</div>`}
       <h1>${escapeHtml(r.name)}</h1>
       ${r.desc ? `<div class="desc">${escapeHtml(r.desc)}</div>` : ''}
     </div>
