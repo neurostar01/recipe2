@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#faf6ee">
+<title>나의 레시피</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #faf6ee;
+  --paper: #f4ede0;
+  --ink: #2a2520;
+  --ink-soft: #5c4a3a;
+  --accent: #c44536;
+  --accent-soft: #e08e6e;
+  --olive: #8a9a5b;
+  --line: #d9cdb8;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body { overscroll-behavior-y: contain; }
+
+body {
+  font-family: 'Gowun Dodum', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(212, 165, 116, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 90%, rgba(196, 69, 54, 0.06) 0%, transparent 40%);
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(45deg, transparent 0, transparent 2px, rgba(139, 110, 78, 0.015) 2px, rgba(139, 110, 78, 0.015) 4px);
+  z-index: 1;
+}
+input, textarea { user-select: text; -webkit-user-select: text; }
+
+.app { position: relative; z-index: 2; max-width: 520px; margin: 0 auto; padding-bottom: 100px; }
+
+/* 헤더 */
+.header { padding: 24px 20px 16px; position: relative; }
+.header-row {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.header-text { text-align: left; }
+.header h1 { font-family: 'Gowun Batang', serif; font-weight: 700; font-size: 26px; letter-spacing: 0.02em; }
+.header .subtitle { margin-top: 2px; font-size: 11px; color: var(--ink-soft); letter-spacing: 0.15em; }
+.menu-btn {
+  background: var(--paper); border: 1px solid var(--line);
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; cursor: pointer;
+}
+.menu-btn:active { background: var(--line); }
+
+.divider-line {
+  height: 1px; background: var(--line);
+  margin: 0 20px;
+  position: relative;
+}
+.divider-line::after {
+  content: ''; position: absolute; left: 50%; top: -1px;
+  transform: translateX(-50%); width: 50px; height: 2px; background: var(--accent);
+}
+
+/* 검색 바 */
+.search-bar { padding: 14px 20px 4px; }
+.search-input {
+  width: 100%; padding: 11px 16px; border: 1px solid var(--line);
+  border-radius: 22px; background: var(--paper); font-family: inherit;
+  font-size: 14px; color: var(--ink); -webkit-appearance: none;
+}
+.search-input:focus { outline: none; border-color: var(--accent); }
+.search-input::placeholder { color: var(--ink-soft); }
+
+/* 카드 그리드 */
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px 20px; }
+.card {
+  background: var(--paper); border-radius: 14px; padding: 18px 12px;
+  text-align: center; cursor: pointer; border: 1px solid var(--line);
+  box-shadow: 2px 3px 0 rgba(42, 37, 32, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative; aspect-ratio: 1;
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+}
+.card:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(42, 37, 32, 0.08); }
+.card .emoji { font-size: 56px; margin-bottom: 6px; line-height: 1; }
+.card .name {
+  font-family: 'Gowun Batang', serif; font-size: 14px; font-weight: 700;
+  line-height: 1.3; max-width: 100%;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card .desc {
+  font-size: 11px; color: var(--ink-soft); margin-top: 2px;
+  max-width: 100%;
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card .delete {
+  position: absolute; top: 4px; right: 4px; background: var(--accent);
+  color: white; border: none; width: 26px; height: 26px; border-radius: 50%;
+  font-size: 16px; cursor: pointer; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.add-card { background: transparent; border: 2px dashed var(--line); box-shadow: none; color: var(--ink-soft); }
+.add-card:active { border-color: var(--accent); color: var(--accent); }
+.add-card .plus { font-size: 36px; font-weight: 300; line-height: 1; }
+.add-card .add-label { font-size: 12px; margin-top: 4px; }
+
+.empty { text-align: center; padding: 60px 20px; color: var(--ink-soft); }
+.empty .big { font-size: 60px; margin-bottom: 16px; }
+.empty p { font-size: 14px; line-height: 1.7; }
+
+/* 모달 */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(42, 37, 32, 0.55);
+  z-index: 100; display: none; align-items: flex-end; justify-content: center;
+}
+.modal-bg.show { display: flex; }
+.modal {
+  background: var(--cream); width: 100%; max-width: 520px;
+  border-radius: 20px 20px 0 0;
+  padding: 22px 20px calc(28px + var(--safe-bottom));
+  max-height: 92vh; overflow-y: auto; animation: slideUp 0.25s ease;
+  -webkit-overflow-scrolling: touch;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal h2 { font-family: 'Gowun Batang', serif; font-size: 20px; margin-bottom: 8px; text-align: center; }
+.modal .helper {
+  font-size: 12px; color: var(--ink-soft); text-align: center;
+  margin-bottom: 18px; line-height: 1.6;
+}
+
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 6px; letter-spacing: 0.05em; }
+.field input, .field textarea {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--line);
+  border-radius: 10px; background: var(--paper); font-family: inherit;
+  font-size: 15px; color: var(--ink); -webkit-appearance: none;
+}
+.field textarea { min-height: 90px; resize: vertical; line-height: 1.6; }
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+.field .hint { font-size: 11px; color: var(--ink-soft); margin-top: 4px; line-height: 1.5; }
+
+.emoji-picker {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+  background: var(--paper); padding: 10px; border-radius: 10px;
+  border: 1px solid var(--line); max-height: 160px; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.emoji-picker button {
+  background: none; border: none; font-size: 26px; padding: 8px;
+  cursor: pointer; border-radius: 6px;
+  aspect-ratio: 1;
+  display: flex; align-items: center; justify-content: center;
+}
+.emoji-picker button.selected { background: var(--accent-soft); }
+
+.btn-row { display: flex; gap: 10px; margin-top: 18px; }
+.btn {
+  flex: 1; padding: 14px; border-radius: 12px; border: none;
+  font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.btn-primary { background: var(--accent); color: white; }
+.btn-secondary { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+
+/* 메뉴 모달 */
+.menu-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 12px; border-radius: 10px;
+  cursor: pointer; font-size: 15px;
+}
+.menu-item:active { background: var(--paper); }
+.menu-item .icon { font-size: 22px; width: 28px; text-align: center; }
+.menu-item .text { flex: 1; }
+.menu-item .text .title { font-weight: 700; }
+.menu-item .text .desc { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.menu-divider { height: 1px; background: var(--line); margin: 6px 0; }
+
+/* 상세 화면 */
+.detail-bg {
+  position: fixed; inset: 0; background: var(--cream);
+  z-index: 90; overflow-y: auto; display: none;
+  -webkit-overflow-scrolling: touch;
+  padding-top: var(--safe-top); padding-bottom: var(--safe-bottom);
+}
+.detail-bg.show { display: block; }
+.detail-header {
+  padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--line); background: var(--cream);
+  position: sticky; top: 0; z-index: 5;
+}
+.back-btn, .edit-btn {
+  background: none; border: none; font-family: inherit; font-size: 15px;
+  color: var(--ink); cursor: pointer; padding: 8px 12px;
+}
+.edit-btn { color: var(--accent); font-weight: 700; }
+.detail-content { padding: 18px 20px; max-width: 520px; margin: 0 auto; }
+.detail-hero { text-align: center; padding: 16px 0 24px; border-bottom: 1px dashed var(--line); margin-bottom: 22px; }
+.detail-hero .emoji { font-size: 100px; line-height: 1; }
+.detail-hero h1 { font-family: 'Gowun Batang', serif; font-size: 26px; margin-top: 10px; line-height: 1.3; }
+.detail-hero .desc { font-size: 13px; color: var(--ink-soft); margin-top: 6px; }
+.section { margin-bottom: 28px; }
+.section-title {
+  font-family: 'Gowun Batang', serif; font-size: 16px; color: var(--accent);
+  margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid var(--accent);
+  display: inline-block; font-weight: 700;
+}
+.ingredient-list { list-style: none; }
+.ingredient-list li {
+  padding: 10px 0; border-bottom: 1px dotted var(--line);
+  display: flex; align-items: center; font-size: 15px;
+}
+.ingredient-list li::before { content: '◦'; color: var(--accent); margin-right: 10px; font-size: 18px; }
+.step-list { list-style: none; counter-reset: step; }
+.step-list li {
+  padding: 12px 0 12px 44px; position: relative;
+  font-size: 15px; line-height: 1.7; counter-increment: step;
+}
+.step-list li::before {
+  content: counter(step); position: absolute; left: 0; top: 10px;
+  width: 30px; height: 30px; background: var(--accent); color: white;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; font-family: 'Gowun Batang', serif;
+}
+.photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.photo-grid img {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  border-radius: 8px; border: 1px solid var(--line); cursor: pointer;
+}
+.link-list { list-style: none; }
+.link-list li {
+  background: var(--paper); padding: 12px 14px; border-radius: 10px;
+  margin-bottom: 8px; border-left: 3px solid var(--olive);
+}
+.link-list a { color: var(--ink); text-decoration: none; font-size: 14px; word-break: break-all; }
+
+.upload-area {
+  display: block; border: 2px dashed var(--line); border-radius: 10px;
+  padding: 18px; text-align: center; cursor: pointer;
+  color: var(--ink-soft); font-size: 13px;
+}
+.thumb-preview { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.thumb-preview .thumb { position: relative; width: 64px; height: 64px; }
+.thumb-preview img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
+.thumb-preview .rm {
+  position: absolute; top: -6px; right: -6px; background: var(--accent);
+  color: white; border: none; width: 22px; height: 22px;
+  border-radius: 50%; font-size: 13px; cursor: pointer; line-height: 1;
+}
+
+.link-input-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.link-input-row input { flex: 1; }
+.link-input-row button {
+  background: var(--accent); color: white; border: none;
+  padding: 0 16px; border-radius: 10px; cursor: pointer;
+  font-family: inherit; font-size: 14px; font-weight: 700;
+}
+.link-tag {
+  background: var(--paper); padding: 8px 12px; border-radius: 8px;
+  font-size: 12px; margin-bottom: 4px;
+  display: flex; justify-content: space-between; align-items: center;
+  word-break: break-all;
+}
+.link-tag span { flex: 1; padding-right: 8px; }
+.link-tag .rm-link {
+  background: none; border: none; color: var(--accent);
+  cursor: pointer; font-size: 18px; flex-shrink: 0;
+}
+
+/* 사진 뷰어 */
+.photo-viewer {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.92);
+  z-index: 200; display: none;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.photo-viewer.show { display: flex; }
+.photo-viewer img { max-width: 100%; max-height: 100%; border-radius: 8px; }
+.photo-viewer .close {
+  position: absolute; top: calc(20px + var(--safe-top)); right: 20px;
+  background: rgba(255,255,255,0.2); color: white;
+  border: none; width: 40px; height: 40px; border-radius: 50%;
+  font-size: 22px; cursor: pointer;
+}
+
+/* 토스트 */
+.toast {
+  position: fixed; bottom: calc(30px + var(--safe-bottom)); left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: var(--cream); padding: 12px 22px;
+  border-radius: 24px; font-size: 14px; z-index: 250;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.toast.show { opacity: 0.95; }
+
+/* 설치 안내 배너 */
+.install-banner {
+  position: fixed; bottom: calc(20px + var(--safe-bottom)); left: 12px; right: 12px;
+  background: var(--ink); color: var(--cream);
+  padding: 14px 16px; border-radius: 14px;
+  font-size: 13px; z-index: 80;
+  display: none; align-items: center; gap: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+.install-banner.show { display: flex; }
+.install-banner .msg { flex: 1; line-height: 1.5; }
+.install-banner .close-btn {
+  background: rgba(255,255,255,0.15); color: var(--cream);
+  border: none; width: 28px; height: 28px; border-radius: 50%;
+  font-size: 16px; cursor: pointer; flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="header-row">
+      <div class="header-text">
+        <h1>나의 레시피</h1>
+        <div class="subtitle">MY RECIPE BOOK</div>
+      </div>
+      <button class="menu-btn" id="menuBtn" aria-label="메뉴">⋯</button>
+    </div>
+  </div>
+  <div class="divider-line"></div>
+
+  <div class="search-bar">
+    <input type="text" class="search-input" id="searchInput" placeholder="🔍 음식 이름 검색..." autocomplete="off">
+  </div>
+
+  <div id="grid" class="grid"></div>
+  <div id="empty" class="empty" style="display:none;">
+    <div class="big">🍳</div>
+    <p>아직 등록된 레시피가 없어요.<br>+ 버튼을 눌러 첫 레시피를 추가해보세요.</p>
+  </div>
+</div>
+
+<!-- 설치 안내 배너 -->
+<div class="install-banner" id="installBanner">
+  <div class="msg" id="installMsg">홈 화면에 추가하면 앱처럼 쓸 수 있어요</div>
+  <button class="close-btn" id="installClose">×</button>
+</div>
+
+<!-- 메뉴 모달 -->
+<div class="modal-bg" id="menuModal">
+  <div class="modal">
+    <h2>메뉴</h2>
+    <div class="menu-item" id="menuExport">
+      <div class="icon">📤</div>
+      <div class="text">
+        <div class="title">데이터 내보내기</div>
+        <div class="desc">전체 레시피를 파일로 저장</div>
+      </div>
+    </div>
+    <div class="menu-item" id="menuImport">
+      <div class="icon">📥</div>
+      <div class="text">
+        <div class="title">데이터 가져오기</div>
+        <div class="desc">백업 파일에서 복원</div>
+      </div>
+    </div>
+    <div class="menu-divider"></div>
+    <div class="menu-item" id="menuAbout">
+      <div class="icon">ℹ️</div>
+      <div class="text">
+        <div class="title">사용 안내</div>
+        <div class="desc">홈 화면 추가 방법</div>
+      </div>
+    </div>
+    <input type="file" id="importInput" accept="application/json,.json" style="display:none;">
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="menuCloseBtn">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 사용 안내 모달 -->
+<div class="modal-bg" id="aboutModal">
+  <div class="modal">
+    <h2>사용 안내</h2>
+    <div class="helper">앱처럼 사용하려면 홈 화면에 추가하세요.</div>
+    <div id="aboutContent" style="font-size: 14px; line-height: 1.8; color: var(--ink-soft);"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="aboutCloseBtn">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 레시피 편집 모달 -->
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <h2 id="modalTitle">새 레시피</h2>
+    <div class="field">
+      <label>음식 아이콘</label>
+      <div class="emoji-picker" id="emojiPicker"></div>
+    </div>
+    <div class="field">
+      <label>음식 이름</label>
+      <input type="text" id="foodName" placeholder="예: 김치찌개" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>한 줄 설명 (선택)</label>
+      <input type="text" id="foodDesc" placeholder="예: 엄마가 알려준 비법" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>재료 (한 줄에 하나씩)</label>
+      <textarea id="foodIngredients" placeholder="김치 200g&#10;돼지고기 150g&#10;두부 반 모"></textarea>
+    </div>
+    <div class="field">
+      <label>요리 순서 (한 줄에 하나씩)</label>
+      <textarea id="foodSteps" placeholder="냄비에 기름을 두르고 돼지고기를 볶는다&#10;김치를 넣고 같이 볶는다"></textarea>
+    </div>
+    <div class="field">
+      <label>📷 사진</label>
+      <label class="upload-area">
+        탭하여 이미지 선택 (여러 장 가능)
+        <input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
+      </label>
+      <div class="thumb-preview" id="photoPreview"></div>
+    </div>
+    <div class="field">
+      <label>🔗 참고 링크</label>
+      <div class="link-input-row">
+        <input type="url" id="linkInput" placeholder="https://..." autocomplete="off">
+        <button type="button" id="addLinkBtn">추가</button>
+      </div>
+      <div id="linkPreview"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" id="cancelBtn">취소</button>
+      <button class="btn btn-primary" id="saveBtn">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 상세 화면 -->
+<div class="detail-bg" id="detailView">
+  <div class="detail-header">
+    <button class="back-btn" id="backBtn">← 뒤로</button>
+    <button class="edit-btn" id="editBtn">편집</button>
+  </div>
+  <div class="detail-content" id="detailContent"></div>
+</div>
+
+<!-- 사진 뷰어 -->
+<div class="photo-viewer" id="photoViewer">
+  <button class="close" id="photoViewerClose">×</button>
+  <img id="photoViewerImg" src="" alt="">
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const EMOJIS = ['🍚','🍜','🍝','🍲','🍛','🍱','🍣','🍤','🍙','🍘','🍢','🍡','🍧','🍨','🍦','🥟','🥘','🍳','🥞','🧇','🥓','🥩','🍗','🍖','🌭','🍔','🍟','🍕','🥪','🌮','🌯','🥙','🧆','🥗','🍿','🧀','🥨','🥖','🍞','🥐','🥯','🥚','🌶️','🥬','🥦','🍅','🥑','🍆','🥒','🌽','🥕','🥔','🍠','🍄','🥜','🍇','🍈','🍉','🍊','🍋','🍌','🍍','🥭','🍎','🍐','🍑','🍒','🍓','🥝','🍵','☕','🧋','🥤','🍶','🍷','🍺','🥃','🍸','🍹'];
+
+const STORAGE_KEY = 'my_recipes_v2';
+const BANNER_DISMISSED_KEY = 'install_banner_dismissed';
+
+let recipes = [];
+let editingId = null;
+let tempPhotos = [];
+let tempLinks = [];
+let selectedEmoji = '🍚';
+let searchQuery = '';
+
+// ============ 저장 ============
+function loadRecipes() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      recipes = JSON.parse(raw);
+      recipes.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+    }
+  } catch(e) {
+    recipes = [];
+  }
+}
+
+function saveRecipes() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes));
+  } catch(e) {
+    alert('저장 공간이 부족해요. 사진을 줄이거나 오래된 레시피를 삭제해주세요.');
+    throw e;
+  }
+}
+
+// ============ 토스트 ============
+let toastTimer = null;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ============ 렌더링 ============
+function render() {
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  grid.innerHTML = '';
+
+  const filtered = searchQuery
+    ? recipes.filter(r =>
+        r.name.toLowerCase().includes(searchQuery) ||
+        (r.desc || '').toLowerCase().includes(searchQuery))
+    : recipes;
+
+  filtered.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <button class="delete" data-id="${r.id}">×</button>
+      <div class="emoji">${r.emoji}</div>
+      <div class="name">${escapeHtml(r.name)}</div>
+      ${r.desc ? `<div class="desc">${escapeHtml(r.desc)}</div>` : ''}
+    `;
+    card.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete')) {
+        e.stopPropagation();
+        if (confirm('"' + r.name + '" 레시피를 삭제할까요?')) deleteRecipe(r.id);
+      } else {
+        showDetail(r.id);
+      }
+    });
+    grid.appendChild(card);
+  });
+
+  // + 버튼은 검색 중이 아닐 때만
+  if (!searchQuery) {
+    const addCard = document.createElement('div');
+    addCard.className = 'card add-card';
+    addCard.innerHTML = `<div class="plus">+</div><div class="add-label">새 레시피</div>`;
+    addCard.addEventListener('click', () => openEditModal(null));
+    grid.appendChild(addCard);
+  }
+
+  if (searchQuery && filtered.length === 0) {
+    empty.style.display = 'block';
+    empty.innerHTML = '<div class="big">🔍</div><p>"' + escapeHtml(searchQuery) + '" 결과가 없어요.</p>';
+  } else if (!searchQuery && recipes.length === 0) {
+    empty.style.display = 'block';
+    empty.innerHTML = '<div class="big">🍳</div><p>아직 등록된 레시피가 없어요.<br>+ 버튼을 눌러 첫 레시피를 추가해보세요.</p>';
+  } else {
+    empty.style.display = 'none';
+  }
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function renderEmojiPicker() {
+  const picker = document.getElementById('emojiPicker');
+  picker.innerHTML = '';
+  EMOJIS.forEach(e => {
+    const btn = document.createElement('button');
+    btn.textContent = e;
+    btn.type = 'button';
+    if (e === selectedEmoji) btn.classList.add('selected');
+    btn.addEventListener('click', () => {
+      selectedEmoji = e;
+      renderEmojiPicker();
+    });
+    picker.appendChild(btn);
+  });
+}
+
+function openEditModal(id) {
+  editingId = id;
+  tempPhotos = [];
+  tempLinks = [];
+
+  if (id) {
+    const r = recipes.find(x => x.id === id);
+    selectedEmoji = r.emoji;
+    document.getElementById('modalTitle').textContent = '레시피 편집';
+    document.getElementById('foodName').value = r.name;
+    document.getElementById('foodDesc').value = r.desc || '';
+    document.getElementById('foodIngredients').value = (r.ingredients || []).join('\n');
+    document.getElementById('foodSteps').value = (r.steps || []).join('\n');
+    tempPhotos = [...(r.photos || [])];
+    tempLinks = [...(r.links || [])];
+  } else {
+    selectedEmoji = '🍚';
+    document.getElementById('modalTitle').textContent = '새 레시피';
+    document.getElementById('foodName').value = '';
+    document.getElementById('foodDesc').value = '';
+    document.getElementById('foodIngredients').value = '';
+    document.getElementById('foodSteps').value = '';
+  }
+
+  renderEmojiPicker();
+  renderPhotoPreview();
+  renderLinkPreview();
+  document.getElementById('editModal').classList.add('show');
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+function renderPhotoPreview() {
+  const cont = document.getElementById('photoPreview');
+  cont.innerHTML = '';
+  tempPhotos.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'thumb';
+    div.innerHTML = `<img src="${p}"><button class="rm" type="button">×</button>`;
+    div.querySelector('.rm').addEventListener('click', () => {
+      tempPhotos.splice(i, 1);
+      renderPhotoPreview();
+    });
+    cont.appendChild(div);
+  });
+}
+
+function renderLinkPreview() {
+  const cont = document.getElementById('linkPreview');
+  cont.innerHTML = '';
+  tempLinks.forEach((l, i) => {
+    const div = document.createElement('div');
+    div.className = 'link-tag';
+    div.innerHTML = `<span>${escapeHtml(l)}</span><button class="rm-link" type="button">×</button>`;
+    div.querySelector('.rm-link').addEventListener('click', () => {
+      tempLinks.splice(i, 1);
+      renderLinkPreview();
+    });
+    cont.appendChild(div);
+  });
+}
+
+// 사진 업로드 (압축)
+document.getElementById('photoInput').addEventListener('change', (e) => {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxW = 800;
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = h * maxW / w; w = maxW; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.75);
+        tempPhotos.push(compressed);
+        renderPhotoPreview();
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+});
+
+document.getElementById('addLinkBtn').addEventListener('click', () => {
+  const input = document.getElementById('linkInput');
+  const val = input.value.trim();
+  if (val) {
+    tempLinks.push(val);
+    input.value = '';
+    renderLinkPreview();
+  }
+});
+document.getElementById('linkInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('addLinkBtn').click();
+  }
+});
+
+// 저장
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const name = document.getElementById('foodName').value.trim();
+  if (!name) { alert('음식 이름을 입력해주세요.'); return; }
+
+  const now = Date.now();
+  const recipe = {
+    id: editingId || ('r_' + now + '_' + Math.random().toString(36).slice(2,7)),
+    emoji: selectedEmoji,
+    name: name,
+    desc: document.getElementById('foodDesc').value.trim(),
+    ingredients: document.getElementById('foodIngredients').value.split('\n').map(s => s.trim()).filter(Boolean),
+    steps: document.getElementById('foodSteps').value.split('\n').map(s => s.trim()).filter(Boolean),
+    photos: tempPhotos,
+    links: tempLinks,
+    createdAt: editingId ? (recipes.find(r => r.id === editingId)?.createdAt || now) : now,
+    updatedAt: now
+  };
+
+  if (editingId) {
+    const idx = recipes.findIndex(r => r.id === editingId);
+    if (idx >= 0) recipes[idx] = recipe;
+  } else {
+    recipes.unshift(recipe);
+  }
+
+  try {
+    saveRecipes();
+    closeEditModal();
+    render();
+    toast(editingId ? '수정 완료' : '저장 완료');
+  } catch(e) {}
+});
+
+document.getElementById('cancelBtn').addEventListener('click', closeEditModal);
+
+function deleteRecipe(id) {
+  recipes = recipes.filter(r => r.id !== id);
+  saveRecipes();
+  render();
+  toast('삭제됨');
+}
+
+// 상세 화면
+function showDetail(id) {
+  const r = recipes.find(x => x.id === id);
+  if (!r) return;
+
+  const content = document.getElementById('detailContent');
+  content.innerHTML = `
+    <div class="detail-hero">
+      <div class="emoji">${r.emoji}</div>
+      <h1>${escapeHtml(r.name)}</h1>
+      ${r.desc ? `<div class="desc">${escapeHtml(r.desc)}</div>` : ''}
+    </div>
+    ${r.ingredients && r.ingredients.length ? `
+    <div class="section">
+      <div class="section-title">재료</div>
+      <ul class="ingredient-list">${r.ingredients.map(i => `<li>${escapeHtml(i)}</li>`).join('')}</ul>
+    </div>` : ''}
+    ${r.steps && r.steps.length ? `
+    <div class="section">
+      <div class="section-title">요리 순서</div>
+      <ol class="step-list">${r.steps.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ol>
+    </div>` : ''}
+    ${r.photos && r.photos.length ? `
+    <div class="section">
+      <div class="section-title">사진</div>
+      <div class="photo-grid">${r.photos.map((p,i) => `<img src="${p}" data-idx="${i}" class="photo-item">`).join('')}</div>
+    </div>` : ''}
+    ${r.links && r.links.length ? `
+    <div class="section">
+      <div class="section-title">참고 링크</div>
+      <ul class="link-list">${r.links.map(l => `<li><a href="${escapeHtml(l)}" target="_blank" rel="noopener">${escapeHtml(l)}</a></li>`).join('')}</ul>
+    </div>` : ''}
+  `;
+  content.querySelectorAll('.photo-item').forEach((img, i) => {
+    img.addEventListener('click', () => openPhotoViewer(r.photos[i]));
+  });
+  document.getElementById('editBtn').onclick = () => {
+    document.getElementById('detailView').classList.remove('show');
+    openEditModal(id);
+  };
+  document.getElementById('detailView').classList.add('show');
+  window.scrollTo(0, 0);
+}
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  document.getElementById('detailView').classList.remove('show');
+});
+
+// 사진 뷰어
+function openPhotoViewer(src) {
+  document.getElementById('photoViewerImg').src = src;
+  document.getElementById('photoViewer').classList.add('show');
+}
+document.getElementById('photoViewerClose').addEventListener('click', () => {
+  document.getElementById('photoViewer').classList.remove('show');
+});
+document.getElementById('photoViewer').addEventListener('click', (e) => {
+  if (e.target.id === 'photoViewer') {
+    document.getElementById('photoViewer').classList.remove('show');
+  }
+});
+
+// ============ 검색 ============
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  searchQuery = e.target.value.trim().toLowerCase();
+  render();
+});
+
+// ============ 메뉴 ============
+document.getElementById('menuBtn').addEventListener('click', () => {
+  document.getElementById('menuModal').classList.add('show');
+});
+document.getElementById('menuCloseBtn').addEventListener('click', () => {
+  document.getElementById('menuModal').classList.remove('show');
+});
+
+// 내보내기
+document.getElementById('menuExport').addEventListener('click', () => {
+  const data = JSON.stringify({ version: 2, exportedAt: Date.now(), recipes }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `recipes-backup-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  document.getElementById('menuModal').classList.remove('show');
+  toast('백업 파일 저장됨');
+});
+
+// 가져오기
+document.getElementById('menuImport').addEventListener('click', () => {
+  document.getElementById('importInput').click();
+});
+document.getElementById('importInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      const importedRecipes = data.recipes || [];
+      if (!Array.isArray(importedRecipes)) throw new Error('잘못된 형식');
+
+      const choice = confirm(
+        `${importedRecipes.length}개의 레시피를 발견했어요.\n\n` +
+        '확인: 기존 데이터에 추가 (중복은 자동 병합)\n' +
+        '취소: 가져오기 중단'
+      );
+      if (!choice) return;
+
+      // 머지: 같은 ID면 더 최근 것 유지
+      const map = new Map();
+      for (const r of recipes) map.set(r.id, r);
+      for (const r of importedRecipes) {
+        const existing = map.get(r.id);
+        if (!existing || (r.updatedAt || 0) >= (existing.updatedAt || 0)) {
+          map.set(r.id, r);
+        }
+      }
+      recipes = Array.from(map.values()).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+      saveRecipes();
+      render();
+      document.getElementById('menuModal').classList.remove('show');
+      toast(`${importedRecipes.length}개 가져옴`);
+    } catch(err) {
+      alert('파일을 읽을 수 없어요. 올바른 백업 파일인지 확인해주세요.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// 사용 안내
+document.getElementById('menuAbout').addEventListener('click', () => {
+  const ua = navigator.userAgent.toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  const isAndroid = /android/.test(ua);
+  let content = '';
+  if (isIOS) {
+    content = `
+      <p style="margin-bottom: 14px;"><b>iPhone에서 앱처럼 사용하기</b></p>
+      <p>1. Safari 하단의 <b>공유 버튼 (⬆️)</b> 탭</p>
+      <p>2. 메뉴를 내려서 <b>"홈 화면에 추가"</b> 선택</p>
+      <p>3. 이름 확인 후 <b>추가</b> 탭</p>
+      <p style="margin-top: 14px;">홈 화면 아이콘으로 열면 주소창 없이 앱처럼 동작해요.</p>
+    `;
+  } else if (isAndroid) {
+    content = `
+      <p style="margin-bottom: 14px;"><b>Android에서 앱처럼 사용하기</b></p>
+      <p>1. Chrome 우측 상단 <b>메뉴 (⋮)</b> 탭</p>
+      <p>2. <b>"홈 화면에 추가"</b> 또는 <b>"앱 설치"</b> 선택</p>
+      <p>3. 확인 후 <b>추가</b> 탭</p>
+      <p style="margin-top: 14px;">홈 화면 아이콘으로 열면 앱처럼 동작해요.</p>
+    `;
+  } else {
+    content = `
+      <p style="margin-bottom: 14px;"><b>홈 화면에 추가하는 방법</b></p>
+      <p>모바일 브라우저(Safari, Chrome)에서 메뉴를 열어 "홈 화면에 추가"를 선택하세요.</p>
+      <p style="margin-top: 14px;"><b>데이터 백업 권장</b></p>
+      <p>브라우저 데이터를 지우면 레시피도 사라져요. 메뉴 → 데이터 내보내기로 정기적으로 백업해주세요.</p>
+    `;
+  }
+  document.getElementById('aboutContent').innerHTML = content;
+  document.getElementById('menuModal').classList.remove('show');
+  document.getElementById('aboutModal').classList.add('show');
+});
+document.getElementById('aboutCloseBtn').addEventListener('click', () => {
+  document.getElementById('aboutModal').classList.remove('show');
+});
+
+// ============ 설치 안내 배너 ============
+function maybeShowInstallBanner() {
+  const dismissed = localStorage.getItem(BANNER_DISMISSED_KEY);
+  if (dismissed) return;
+  // 이미 standalone(홈 화면 추가됨)이면 표시 안 함
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (isStandalone) return;
+  // 데이터가 어느 정도 쌓였을 때만 안내 (최초 사용 직후 방해 안 함)
+  if (recipes.length < 2) return;
+
+  const ua = navigator.userAgent.toLowerCase();
+  const isIOS = /iphone|ipad|ipod/.test(ua);
+  if (isIOS) {
+    document.getElementById('installMsg').innerHTML = '공유 → "홈 화면에 추가"로 앱처럼 쓰세요';
+  }
+  setTimeout(() => {
+    document.getElementById('installBanner').classList.add('show');
+  }, 1500);
+}
+document.getElementById('installClose').addEventListener('click', () => {
+  localStorage.setItem(BANNER_DISMISSED_KEY, '1');
+  document.getElementById('installBanner').classList.remove('show');
+});
+
+// ============ 모달 외부 탭 → 닫기 ============
+document.querySelectorAll('.modal-bg').forEach(bg => {
+  bg.addEventListener('click', (e) => {
+    if (e.target === bg) bg.classList.remove('show');
+  });
+});
+
+// ============ 샘플 데이터 ============
+function getSamples() {
+  const now = Date.now();
+  return [
+    {
+      id: 'sample_1', emoji: '🍲', name: '김치찌개', desc: '엄마표 비법',
+      ingredients: ['묵은지 200g', '돼지고기 앞다리살 150g', '두부 1/2모', '대파 1대', '고춧가루 1큰술', '다진마늘 1작은술'],
+      steps: ['냄비에 기름을 두르고 돼지고기를 볶는다', '김치를 넣고 함께 볶아 신맛을 날린다', '물 400ml를 붓고 고춧가루, 마늘을 넣어 끓인다', '15분 끓인 후 두부와 대파를 넣고 5분 더 끓인다'],
+      photos: [], links: [], createdAt: now - 2000, updatedAt: now - 2000
+    },
+    {
+      id: 'sample_2', emoji: '🍝', name: '오일 파스타', desc: '15분 완성',
+      ingredients: ['스파게티 100g', '마늘 5쪽', '페페론치노 3개', '올리브오일 3큰술', '소금', '파슬리'],
+      steps: ['끓는 물에 소금을 넣고 면을 7분 삶는다', '팬에 올리브오일과 편마늘, 페페론치노를 약불에 익힌다', '면수 한 국자와 면을 넣고 빠르게 볶는다', '소금으로 간하고 파슬리를 뿌려 마무리'],
+      photos: [], links: [], createdAt: now - 1000, updatedAt: now - 1000
+    }
+  ];
+}
+
+// ============ 초기화 ============
+(function init() {
+  loadRecipes();
+  if (recipes.length === 0) {
+    recipes = getSamples();
+    try { saveRecipes(); } catch(e) {}
+  }
+  render();
+  maybeShowInstallBanner();
+})();
+</script>
+</body>
+</html>
